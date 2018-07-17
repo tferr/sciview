@@ -77,9 +77,11 @@ import org.scijava.menu.MenuService;
 import org.scijava.plugin.Parameter;
 import org.scijava.thread.ThreadService;
 import org.scijava.ui.behaviour.ClickBehaviour;
+import org.scijava.ui.behaviour.InputTrigger;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.ColorRGBA;
 import org.scijava.util.Colors;
+import sc.iview.controls.behaviours.NodeTranslateControl;
 import sc.iview.javafx.JavaFXMenuCreator;
 import sc.iview.process.MeshConverter;
 import sc.iview.vector.ClearGLVector3;
@@ -421,25 +423,9 @@ public class SciView extends SceneryBase {
 
         @Override public void click( int x, int y ) {
             String helpString = "SciView help:\n\n";
-            // HACK: hard-coded, but no accessor for getAllBindings in scenery
-            helpString += "U - this menu\n";
-            helpString += "W/S - forward/backward\n";
-            helpString += "A/D - left/right\n";
-            helpString += "space/shift + space - up/down\n";
-            helpString += "X - toggle between FPS and arcball camera control\n";
-            helpString += "  FPS camera control allows free movement in all directions\n";
-            helpString += "  Arcball camera control allows for mouse-only rotation about an object's center\n";
-            helpString += "Q - debug view\n";
-            helpString += "P - take a screenshot\n";
-            helpString += "shift + P - record a video\n";
-            helpString += "shift + V - toggle virtual reality mode\n";
-            helpString += "F - toggle fullscreen\n";
-            helpString += "K - increase exposure\n";
-            helpString += "L - decrease exposure\n";
-            helpString += "shift + K - increase gamma\n";
-            helpString += "shift + L - decrease gamma\n";
-            helpString += "N - Increase Speed of FPS in FPS mode and mouse movement in arcball mode\n";
-            helpString += "M - Decrease Speed of FPS in FPS mode and mouse movement in arcball mode\n";
+            for( InputTrigger trigger : getInputHandler ().getAllBindings().keySet() ) {
+                helpString += trigger + "\t-\t" + getInputHandler ().getAllBindings().get( trigger ) + "\n";
+            }
             // HACK: Make the console pop via stderr.
             // Later, we will use a nicer dialog box or some such.
             log.warn( helpString );
@@ -450,10 +436,9 @@ public class SciView extends SceneryBase {
         //setInputHandler((ClearGLInputHandler) viewer.getHub().get(SceneryElement.INPUT));
 
         Function1<? super List<SelectResult>, Unit> selectAction = nearest -> {
-            log.warn( "Select action triggered" );
             if( !nearest.isEmpty() ) {
                 setActiveNode( nearest.get( 0 ).getNode() );
-                log.warn( "Selected node: " + getActiveNode() );
+                log.warn( "Selected node: " + getActiveNode().getName() );
             }
             return Unit.INSTANCE;
         };
@@ -462,17 +447,24 @@ public class SciView extends SceneryBase {
         ignoredObjects.add( BoundingGrid.class );
 
         getInputHandler().useDefaultBindings( "" );
+
+        // Mouse controls
         getInputHandler().addBehaviour( "object_selection_mode",
                                         new SelectCommand( "objectSelector", getRenderer(), getScene(),
                                                            () -> getScene().findObserver(), false, ignoredObjects,
                                                            selectAction ) );
         getInputHandler().addKeyBinding( "object_selection_mode", "double-click button1" );
 
-        //enableArcBallControl();
+        enableArcBallControl();
         enableFPSControl();
 
-        getInputHandler().addBehaviour( "toggle_control_mode", new toggleCameraControl() );
-        getInputHandler().addKeyBinding( "toggle_control_mode", "X" );
+        getInputHandler().addBehaviour( "mouse_control_nodetranslate", new NodeTranslateControl(this) );
+        getInputHandler().addKeyBinding( "mouse_control_nodetranslate", "button2" );
+
+
+        // Keyboard controls
+//        getInputHandler().addBehaviour( "toggle_control_mode", new toggleCameraControl() );
+//        getInputHandler().addKeyBinding( "toggle_control_mode", "X" );
 
         //setupCameraModeSwitching( "X" );
 
@@ -499,29 +491,18 @@ public class SciView extends SceneryBase {
         float mouseSpeed = 0.25f;
         mouseSpeed = getMouseSpeed();
 
-        String helpString = "SciView help:\n\n";
-        // HACK: hard-coded, but no accessor for getAllBindings in scenery
-        helpString += mouseSpeed + "\n";
-        log.warn( helpString );
-
         Supplier<Camera> cameraSupplier = () -> getScene().findObserver();
-        targetArcball = new ArcballCameraControl( "mouse_control", cameraSupplier, getRenderer().getWindow().getWidth(),
+        targetArcball = new ArcballCameraControl( "mouse_control_arcball", cameraSupplier, getRenderer().getWindow().getWidth(),
                                                   getRenderer().getWindow().getHeight(), target );
         targetArcball.setMaximumDistance( Float.MAX_VALUE );
         targetArcball.setMouseSpeedMultiplier( mouseSpeed );
         targetArcball.setScrollSpeedMultiplier( 0.05f );
         targetArcball.setDistance( getCamera().getPosition().minus( target ).magnitude() );
 
-        getInputHandler().addBehaviour( "mouse_control", targetArcball );
+        getInputHandler().addBehaviour( "mouse_control_arcball", targetArcball );
+        getInputHandler().addKeyBinding( "mouse_control_arcball", "shift button1" );
         getInputHandler().addBehaviour( "scroll_arcball", targetArcball );
-        getInputHandler().addKeyBinding( "scroll_arcball", "scroll" );
-
-        getInputHandler().removeBehaviour( "move_forward" );
-        getInputHandler().removeBehaviour( "move_back" );
-        getInputHandler().removeBehaviour( "move_left" );
-        getInputHandler().removeBehaviour( "move_right" );
-        getInputHandler().removeBehaviour( "move_up" );
-        getInputHandler().removeBehaviour( "move_down" );
+        getInputHandler().addKeyBinding( "scroll_arcball", "shift scroll" );
     }
 
     public void enableFPSControl() {
@@ -530,20 +511,12 @@ public class SciView extends SceneryBase {
                                            getRenderer().getWindow().getHeight() );
 
         getInputHandler().addBehaviour( "mouse_control", fpsControl );
-        getInputHandler().removeKeyBinding( "scroll_arcball" );
-        getInputHandler().removeBehaviour( "scroll_arcball" );
+        getInputHandler().addKeyBinding( "mouse_control", "button1" );
 
         float defaultSpeed = 3.0f;
         defaultSpeed = getFPSSpeed();
-        String helpString = "SciView help:\n\n";
-        // HACK: hard-coded, but no accessor for getAllBindings in scenery
-        helpString += defaultSpeed + "\n";
-        log.warn( helpString );
-
         resetFPSInputs();
 
-//        getInputHandler().addKeyBinding( "move_up", "C" );
-//        getInputHandler().addKeyBinding( "move_down", "Z" );
         getInputHandler().addKeyBinding( "move_forward_scroll", "scroll" );
     }
 
