@@ -1258,4 +1258,8 @@ public class SciView extends SceneryBase {
     public ArcballCameraControl getTargetArcball() {
         return targetArcball;
     }
+
+    protected void finalize() {
+        stopAnimation();
+    }
 }
