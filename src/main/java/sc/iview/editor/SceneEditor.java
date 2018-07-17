@@ -28,16 +28,25 @@
  */
 package sc.iview.editor;
 
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JTree;
 import javax.swing.WindowConstants;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.scijava.swing.checkboxtree.CheckBoxNodeData;
+import org.scijava.swing.checkboxtree.CheckBoxNodeEditor;
+import org.scijava.swing.checkboxtree.CheckBoxNodeRenderer;
 import org.scijava.widget.UIComponent;
 
 import sc.iview.SciView;
+
+import graphics.scenery.Node;
 
 /**
  * Interactive UI for visualizing and editing the scene graph.
@@ -79,11 +88,68 @@ public class SceneEditor implements UIComponent<JPanel> {
     private synchronized void initPanel() {
         if( panel != null ) return;
         final JPanel p = new JPanel();
-        p.setLayout(new MigLayout("", "[grow]", "[grow]"));
+        p.setLayout( new MigLayout( "", "[grow]", "[grow]" ) );
 
-        p.add( new JButton("Hello world") );
-        p.add( new JButton( sciView.getName() ) );
+        p.add( createTree() );
 
         panel = p;
+    }
+
+    private JTree createTree() {
+        final DefaultMutableTreeNode root = new DefaultMutableTreeNode( sciView );
+
+        for( final Node sceneNode : sciView.getSceneNodes() ) {
+            addNode( root, sceneNode );
+        }
+
+        final DefaultTreeModel treeModel = new DefaultTreeModel( root );
+        final JTree tree = new JTree( treeModel );
+
+        final CheckBoxNodeRenderer renderer = new CheckBoxNodeRenderer();
+        tree.setCellRenderer( renderer );
+
+        final CheckBoxNodeEditor editor = new CheckBoxNodeEditor( tree );
+        tree.setCellEditor( editor );
+        tree.setEditable( true );
+
+        // listen for changes in the selection
+        tree.addTreeSelectionListener( e -> {
+            System.out.println( System.currentTimeMillis() + ": selection changed" );
+        } );
+
+        // listen for changes in the model (including check box toggles)
+        treeModel.addTreeModelListener( new TreeModelListener() {
+
+            @Override
+            public void treeNodesChanged( final TreeModelEvent e ) {
+                System.out.println( System.currentTimeMillis() + ": nodes changed" );
+            }
+
+            @Override
+            public void treeNodesInserted( final TreeModelEvent e ) {
+                System.out.println( System.currentTimeMillis() + ": nodes inserted" );
+            }
+
+            @Override
+            public void treeNodesRemoved( final TreeModelEvent e ) {
+                System.out.println( System.currentTimeMillis() + ": nodes removed" );
+            }
+
+            @Override
+            public void treeStructureChanged( final TreeModelEvent e ) {
+                System.out.println( System.currentTimeMillis() + ": structure changed" );
+            }
+        } );
+
+        return tree;
+    }
+
+    private static DefaultMutableTreeNode addNode( final DefaultMutableTreeNode parent, final Node sceneNode ) {
+        final String text = sceneNode.getName();
+        final boolean checked = sceneNode.getVisible();
+        final CheckBoxNodeData data = new CheckBoxNodeData( text, checked );
+        final DefaultMutableTreeNode treeNode = new DefaultMutableTreeNode( data );
+        parent.add( treeNode );
+        return treeNode;
     }
 }
