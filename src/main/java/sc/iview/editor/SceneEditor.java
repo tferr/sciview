@@ -58,8 +58,9 @@ public class SceneEditor implements UIComponent<JPanel> {
     public void show() {
         final JFrame frame = new JFrame( "Scene Editor" );
         frame.setContentPane( getComponent() );
-        frame.pack();
+        // FIXME: Why doesn't the frame disappear when closed?
         frame.setDefaultCloseOperation( WindowConstants.DISPOSE_ON_CLOSE );
+        frame.pack();
         frame.setVisible( true );
     }
 
