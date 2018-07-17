@@ -1025,7 +1025,7 @@ public class SciView extends SceneryBase {
                 try {
                     Thread.sleep( delay );
                 } catch( InterruptedException e ) {
-                    log.error( e );
+                    break;
                 }
             }
         } ) );
