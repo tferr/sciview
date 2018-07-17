@@ -1,6 +1,7 @@
 package sc.iview.controls.behaviours;
 
 import cleargl.GLVector;
+import com.jogamp.opengl.math.Quaternion;
 import org.scijava.ui.behaviour.DragBehaviour;
 import sc.iview.SciView;
 
@@ -13,8 +14,19 @@ public class NodeTranslateControl implements DragBehaviour {
     private int lastX;
     private int lastY;
 
-    public NodeTranslateControl( SciView sciView ) {
+    public float getDragSpeed() {
+        return dragSpeed;
+    }
+
+    public void setDragSpeed( float dragSpeed ) {
+        this.dragSpeed = dragSpeed;
+    }
+
+    protected float dragSpeed;
+
+    public NodeTranslateControl( SciView sciView, float dragSpeed ) {
         this.sciView = sciView;
+        this.dragSpeed = dragSpeed;
     }
 
     /**
@@ -38,12 +50,11 @@ public class NodeTranslateControl implements DragBehaviour {
             return;
         }
 
-        float dragScale = 0.0001f;
+        float[] translationVector = new float[]{ ( x - lastX ) * getDragSpeed(), ( y - lastY ) * getDragSpeed(), 0};
 
-        float[] translationVector = new float[]{ ( x - lastX ) * dragScale, ( y - lastY ) * dragScale, 0};
         sciView.getCamera().getRotation().rotateVector( translationVector, 0, translationVector, 0 );
+        translationVector[1] *= -1;
 
-        // TODO use an affine transform of the camera to figure out what plane to translate the node along
         sciView.getActiveNode().setPosition( sciView.getActiveNode().getPosition().plus( new GLVector( translationVector ) ) );
 
         sciView.getActiveNode().getLock().unlock();

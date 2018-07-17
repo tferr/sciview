@@ -458,7 +458,7 @@ public class SciView extends SceneryBase {
         enableArcBallControl();
         enableFPSControl();
 
-        getInputHandler().addBehaviour( "mouse_control_nodetranslate", new NodeTranslateControl(this) );
+        getInputHandler().addBehaviour( "mouse_control_nodetranslate", new NodeTranslateControl(this, 0.001f) );
         getInputHandler().addKeyBinding( "mouse_control_nodetranslate", "button2" );
 
 
