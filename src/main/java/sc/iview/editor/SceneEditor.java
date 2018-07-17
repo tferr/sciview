@@ -54,6 +54,7 @@ public class SceneEditor implements UIComponent<JPanel> {
         sciView.getScijavaContext().inject( this );
     }
 
+    /** Creates and displays a window containing the scene editor. */
     public void show() {
         final JFrame frame = new JFrame( "Scene Editor" );
         frame.setContentPane( getComponent() );
