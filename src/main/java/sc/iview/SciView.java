@@ -81,6 +81,7 @@ import org.scijava.ui.behaviour.InputTrigger;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.ColorRGBA;
 import org.scijava.util.Colors;
+import sc.iview.controls.behaviours.CameraTranslateControl;
 import sc.iview.controls.behaviours.NodeTranslateControl;
 import sc.iview.javafx.JavaFXMenuCreator;
 import sc.iview.process.MeshConverter;
@@ -459,7 +460,7 @@ public class SciView extends SceneryBase {
         enableFPSControl();
 
         getInputHandler().addBehaviour( "mouse_control_nodetranslate", new NodeTranslateControl(this, 0.001f) );
-        getInputHandler().addKeyBinding( "mouse_control_nodetranslate", "button2" );
+        getInputHandler().addKeyBinding( "mouse_control_nodetranslate", "shift button2" );
 
 
         // Keyboard controls
@@ -512,6 +513,9 @@ public class SciView extends SceneryBase {
 
         getInputHandler().addBehaviour( "mouse_control", fpsControl );
         getInputHandler().addKeyBinding( "mouse_control", "button1" );
+
+        getInputHandler().addBehaviour( "mouse_control_cameratranslate", new CameraTranslateControl( this, 0.001f ) );
+        getInputHandler().addKeyBinding( "mouse_control_cameratranslate", "button2" );
 
         float defaultSpeed = 3.0f;
         defaultSpeed = getFPSSpeed();
@@ -986,6 +990,7 @@ public class SciView extends SceneryBase {
 
     public Node setActiveNode( Node n ) {
         activeNode = n;
+        targetArcball.setTarget( n.getPosition() );
         return activeNode;
     }
 
