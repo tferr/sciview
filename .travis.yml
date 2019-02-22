@@ -7,14 +7,14 @@ matrix:
     - env: JDK_RELEASE='OpenJDK 8'
       jdk: openjdk8
 # 9
-    - env: JDK_RELEASE='OracleJDK 9'
+    - env: JDK_RELEASE='OracleJDK 9' MAVEN_OPTS='-Denforcer.skip=true'
       jdk: oraclejdk9
-    - env: JDK_RELEASE='OpenJDK 9'
+    - env: JDK_RELEASE='OpenJDK 9' MAVEN_OPTS='-Denforcer.skip=true'
       install: . ./install-jdk.sh -F 9
 # 11
-    - env: JDK_RELEASE='OracleJDK 11'
+    - env: JDK_RELEASE='OracleJDK 11' MAVEN_OPTS='-Denforcer.skip=true'
       install: . ./install-jdk.sh -F 11 -L BCL
-    - env: JDK_RELEASE='OpenJDK 11'
+    - env: JDK_RELEASE='OpenJDK 11' MAVEN_OPTS='-Denforcer.skip=true'
       install: . ./install-jdk.sh -F 11 -L GPL
 
 install: true
