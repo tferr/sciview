@@ -19,6 +19,7 @@ matrix:
 
 install: true
 script:
+  - echo $MAVEN_OPTS
   - java -version
   - ".travis/build.sh"
 cache:
