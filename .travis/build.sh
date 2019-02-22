@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# by default, exit with 0
+success=0
+
 # Discern whether this is a release build.
 if [ "$TRAVIS_SECURE_ENV_VARS" = true \
   -a "$TRAVIS_PULL_REQUEST" = false \
@@ -9,9 +12,10 @@ then
   UPLOAD_TO_UPDATE_SITE=true
 fi
 
-# Perform the main build.
+# Perform the main build, and check the return code
 curl -fsLO https://raw.githubusercontent.com/scijava/scijava-scripts/master/travis-build.sh
 sh travis-build.sh $encrypted_eb7aa63bf7ac_key $encrypted_eb7aa63bf7ac_iv
+success=$?
 
 # Upload release version to the ImageJ update site.
 if [ "$UPLOAD_TO_UPDATE_SITE" ]
@@ -20,3 +24,5 @@ then
 else
   echo '--> Not a release build; skippin upload to update site.'
 fi
+
+exit $success
