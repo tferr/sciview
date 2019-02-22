@@ -1,0 +1,53 @@
+<settings>
+    <profiles>
+        <profile>
+            <id>disable-enforcer-jdk9</id>
+            <activation>
+                <property>
+                    <name>JDK_RELEASE</name>
+                    <value>OracleJDK 9</value>
+                </property>
+            </activation>
+            <properties>
+                <enforcer.skip>true</enforcer.skip>
+            </properties>
+        </profile>
+        <profile>
+            <id>disable-enforcer-openjdk9</id>
+            <activation>
+                <property>
+                    <name>JDK_RELEASE</name>
+                    <value>OpenJDK 9</value>
+                </property>
+            </activation>
+            <properties>
+                <enforcer.skip>true</enforcer.skip>
+            </properties>
+        </profile>
+        <profile>
+            <id>disable-enforcer-jdk11</id>
+            <activation>
+                <property>
+                    <name>JDK_RELEASE</name>
+                    <value>OracleJDK 11</value>
+                </property>
+            </activation>
+            <properties>
+                <enforcer.skip>true</enforcer.skip>
+            </properties>
+        </profile>
+        <profile>
+            <id>disable-enforcer-openjdk11</id>
+            <activation>
+                <property>
+                    <name>JDK_RELEASE</name>
+                    <value>OpenJDK 11</value>
+                </property>
+            </activation>
+            <properties>
+                <enforcer.skip>true</enforcer.skip>
+            </properties>
+        </profile>
+    </profiles>
+</settings>
+
