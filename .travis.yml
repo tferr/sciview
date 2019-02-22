@@ -17,10 +17,6 @@ matrix:
     - env: JDK_RELEASE='OpenJDK 11'
       install: . ./install-jdk.sh -F 11 -L GPL
 
-branches:
-  only:
-  - master
-  - "/.*-[0-9]+\\..*/"
 install: true
 script:
   - java -version
