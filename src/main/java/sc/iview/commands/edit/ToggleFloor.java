@@ -28,7 +28,6 @@
  */
 package sc.iview.commands.edit;
 
-import com.sun.org.glassfish.gmbal.ParameterNames;
 import org.scijava.command.Command;
 import org.scijava.event.EventService;
 import org.scijava.log.LogService;
