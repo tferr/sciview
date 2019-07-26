@@ -43,6 +43,12 @@ public class DoubleVector3 implements Vector3 {
         this.z = z;
     }
 
+    public DoubleVector3( double[] v ) {
+        this.x = v[0];
+        this.y = v[1];
+        this.z = v[2];
+    }
+
     @Override public float xf() { return (float) x; }
     @Override public float yf() { return (float) y; }
     @Override public float zf() { return (float) z; }

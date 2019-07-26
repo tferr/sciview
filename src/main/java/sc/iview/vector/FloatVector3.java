@@ -43,6 +43,12 @@ public class FloatVector3 implements Vector3 {
         this.z = z;
     }
 
+    public FloatVector3( float[] v ) {
+        this.x = v[0];
+        this.y = v[1];
+        this.z = v[2];
+    }
+
     @Override public float xf() { return x; }
     @Override public float yf() { return y; }
     @Override public float zf() { return z; }

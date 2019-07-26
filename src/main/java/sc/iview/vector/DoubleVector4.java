@@ -44,6 +44,13 @@ public class DoubleVector4 implements Vector4 {
         this.w = w;
     }
 
+    public DoubleVector4(double[] v ) {
+        this.x = v[0];
+        this.y = v[1];
+        this.z = v[2];
+        this.w = v[3];
+    }
+
     @Override public float xf() { return (float) x; }
     @Override public float yf() { return (float) y; }
     @Override public float zf() { return (float) z; }

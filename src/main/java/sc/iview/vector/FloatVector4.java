@@ -44,6 +44,13 @@ public class FloatVector4 implements Vector4 {
         this.w = w;
     }
 
+    public FloatVector4(float[] v ) {
+        this.x = v[0];
+        this.y = v[1];
+        this.z = v[2];
+        this.w = v[3];
+    }
+
     @Override public float xf() { return x; }
     @Override public float yf() { return y; }
     @Override public float zf() { return z; }
