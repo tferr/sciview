@@ -62,5 +62,7 @@ public class SetTransferFunction extends InteractiveCommand {
         tf.addControlPoint(0.0f, 0.0f);
         tf.addControlPoint(rampMin, 0.0f);
         tf.addControlPoint(1.0f, rampMax);
+        volume.setNeedsUpdate(true);
+        volume.setDirty(true);
     }
 }
