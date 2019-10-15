@@ -1,6 +1,7 @@
 package sc.iview.commands.view.transferfunction;
 
 import graphics.scenery.volumes.TransferFunction;
+import org.scijava.object.ObjectService;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -44,7 +45,7 @@ public class TransferFunctionDrawPanel extends JPanel {
 	
 	private final Axis xAxis = new Axis("Volume values", Axis.AxisType.XAXIS);
 	
-	private final VolumeDataManager dataManager;
+	private final ObjectService objectService;
 	
 	private final JPanel renderAndAxisArea= new JPanel();
 	
@@ -63,12 +64,12 @@ public class TransferFunctionDrawPanel extends JPanel {
 	/**
 	 * Constructor to create the render image
 	 * @param tf
-	 * @param dataManager
+	 * @param objectService
 	 */
-	public TransferFunctionDrawPanel(final TransferFunction tf, final VolumeDataManager dataManager){
-		this.dataManager = dataManager;
+	public TransferFunctionDrawPanel(final TransferFunction1D tf, final ObjectService objectService){
+		this.objectService = objectService;
 		logarithmicOccuranceCheck.setSelected(true);
-		renderPanel = new TransferFunctionRenderPanel1D(tf, dataManager);
+		renderPanel = new TransferFunctionRenderPanel1D(tf, objectService);
 		renderPanel.setLogscaleDistribution(logarithmicOccuranceCheck.isSelected());
 		initUI();
 		initListener();
@@ -143,9 +144,9 @@ public class TransferFunctionDrawPanel extends JPanel {
 	 */
 	@Override
 	public void paint(Graphics g) {
-		//update xAxis TODO
-		xAxis.setMax(dataManager.getGlobalMaxVolumeValue());
-		yDistributionAxis.setMax(dataManager.getGlobalMaxOccurance());
+		// TODO: update xaxis, in SciView itself add Volume statistics support for global max
+//		xAxis.setMax(dataManager.getGlobalMaxVolumeValue());
+//		yDistributionAxis.setMax(dataManager.getGlobalMaxOccurance());
 		super.paint(g);
 	};
 	
