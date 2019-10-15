@@ -1,5 +1,11 @@
 package sc.iview.commands.view.transferfunction;
 
+import graphics.scenery.Node;
+import graphics.scenery.volumes.Volume;
+import org.scijava.event.EventHandler;
+import org.scijava.object.ObjectService;
+import sc.iview.event.NodeAddedEvent;
+
 import java.awt.Color;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -23,16 +29,16 @@ public class VolumeLegend extends JPanel {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private final VolumeDataManager dataManager;
-	
-	private final Map<Integer,JCheckBox> idCheckboxMap = new HashMap<Integer, JCheckBox>(); 
+	private final ObjectService objectService;
+
+	private final Map<Volume,JCheckBox> idCheckboxMap = new HashMap<>();
 	
 	/**
 	 * Constructor
-	 * @param m
+	 * @param objectService
 	 */
-	public VolumeLegend(final VolumeDataManager m){
-		this.dataManager = m;
+	public VolumeLegend(final ObjectService objectService){
+		this.objectService = objectService;
 		initLegend();
 		initListener();
 	}
@@ -41,18 +47,16 @@ public class VolumeLegend extends JPanel {
 	 * Init data listener
 	 */
 	private void initListener() {
-		dataManager.addVolumeDataManagerListener(new VolumeDataManagerAdapter() {
-			
-			/**
-			 * repaint if data is added
-			 */
-			@Override
-			public void addedData(Integer id) {
-				updateLegend(id);
-				repaint();
-			}
-		});
+		objectService.eventService().subscribe(this);
 	}
+
+	@EventHandler
+    protected void onNodeAdded(NodeAddedEvent event) {
+		if( event.getNode() instanceof Volume ) {
+			updateLegend((Volume) event.getNode());
+			repaint();
+		}
+    }
 
 	/**
 	 * Initializes the UI
@@ -64,30 +68,19 @@ public class VolumeLegend extends JPanel {
 
 	/**
 	 * Updates UI, add Entries if they are not already present
-	 * @param id
+	 * @param volume
 	 */
-	private void updateLegend(final Integer id) {
-			if(idCheckboxMap.containsKey(id)){
+	private void updateLegend(final Volume volume) {
+			if(idCheckboxMap.containsKey(volume)){
 				return;
 			}
 
-			Color volumeColor = getColorOfVolume(id);
-			VolumeDataBlock data = dataManager.getVolume(id);
-			final JCheckBox tmp = new JCheckBox("Volume: "+(id+1)+" ("+data.name+")");
+			Color volumeColor = Color.RED;// TODO: keep some list like the previous version did
+
+			final JCheckBox tmp = new JCheckBox("Volume "+volume.getName()+": ");
 			tmp.setForeground(volumeColor);
 			tmp.setSelected(true);
-			tmp.addItemListener(new ItemListener() {
-				
-				/**
-				 * Dis- or enables partial volume if selection of the check box changes 
-				 */
-				@Override
-				public void itemStateChanged(ItemEvent e) {
-				 	dataManager.enableVolume(id, tmp.isSelected());
-					
-				}
-			});
-			idCheckboxMap.put(id, tmp);
+			idCheckboxMap.put(volume, tmp);
 			add(tmp);
 	}
 }
