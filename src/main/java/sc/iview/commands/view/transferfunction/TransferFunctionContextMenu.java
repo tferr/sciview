@@ -7,6 +7,8 @@ import java.awt.event.MouseListener;
 
 import javax.swing.JPopupMenu;
 
+import static sc.iview.commands.view.transferfunction.WindowUtils.transformWindowNormalSpace;
+
 /**
  * Represents the context menu of the transfer function panel and delivers standard interactions
  * @author michael
