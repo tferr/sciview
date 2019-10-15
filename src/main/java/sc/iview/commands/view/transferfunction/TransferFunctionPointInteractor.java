@@ -10,6 +10,9 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Point2D;
 
+import static sc.iview.commands.view.transferfunction.TransferFunction1D.calculateTransferFunctionPoint;
+import static sc.iview.commands.view.transferfunction.WindowUtils.transformWindowNormalSpace;
+
 /**
  * Delivers drag point interactions and double click events on the transfer function panel
  * @author michael

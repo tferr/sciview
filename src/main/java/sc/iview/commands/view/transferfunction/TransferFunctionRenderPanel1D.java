@@ -271,7 +271,7 @@ public class TransferFunctionRenderPanel1D extends JPanel {
 
 		// TODO: make a new version of this
 //		Set<Integer> volumeKeys = volumeDataManager.getVolumeKeys();
-//		
+//
 //		float maxYValue =volumeDataManager.getGlobalMaxOccurance();
 //		float maxXValue = volumeDataManager.getGlobalMaxVolumeValue();
 //		if(logscale){
