@@ -13,7 +13,14 @@ import java.util.TreeMap;
 
 import javax.swing.JPanel;
 
-import graphics.scenery.volumes.TransferFunction;
+import org.scijava.event.EventHandler;
+import org.scijava.object.ObjectService;
+import sc.iview.event.NodeAddedEvent;
+import sc.iview.event.NodeChangedEvent;
+import sc.iview.event.NodeRemovedEvent;
+
+import static sc.iview.commands.view.transferfunction.TransferFunction1D.calculateDrawPoint;
+import static sc.iview.commands.view.transferfunction.WindowUtils.transformWindowNormalSpace;
 
 /**
  * Transfer function interaction panel similar to paraview
@@ -27,8 +34,8 @@ public class TransferFunctionRenderPanel1D extends JPanel {
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	private VolumeDataManager volumeDataManager = null;
-	
+	private ObjectService objectService = null;
+
 	private final TransferFunctionContextMenu contextMenue;
 
 	private final TransferFunctionPointInteractor pointInteractor;
@@ -53,14 +60,14 @@ public class TransferFunctionRenderPanel1D extends JPanel {
 	/**
 	 * constructor
 	 * @param tf the transfer function to use
-	 * @param dataManager the data manager to use
+	 * @param objectService the data manager to use
 	 */
-	public TransferFunctionRenderPanel1D(final TransferFunction1D tf, final VolumeDataManager dataManager){
+	public TransferFunctionRenderPanel1D(final TransferFunction1D tf, final ObjectService objectService){
 
 		initWindow();
 		setTransferFunction(tf);
 		pointInteractor = new TransferFunctionPointInteractor(this);
-		setVolumeDataManager(dataManager);
+		setObjectService(objectService);
 		
 		//resizeHandler = new TransferFunctionWindowResizeHandler(getSize(),transferFunction);
 		contextMenue = new TransferFunctionContextMenu(this);
@@ -118,40 +125,33 @@ public class TransferFunctionRenderPanel1D extends JPanel {
 	/**
 	 * @return the data manager which is currently in use
 	 */
-	public VolumeDataManager getVolumeDataManager() {
-		return volumeDataManager;
+	public ObjectService getObjectService() {
+		return objectService;
 	}
 
 	/**
 	 * Set a new data manager to use
-	 * @param volumeDataManager the new data manager
+	 * @param objectService the object service
 	 */
-	public void setVolumeDataManager(VolumeDataManager volumeDataManager) {
-		this.volumeDataManager = volumeDataManager;
-		volumeDataManager.addVolumeDataManagerListener(new IVolumeDataManagerListener() {
-			
-			// Repaint on data update all data actions
-			@Override
-			public void dataUpdated(Integer i) {
-				repaint();
-			}
-			
-			@Override
-			public void addedData(Integer i) {
-				repaint();	
-			}
-			
-			@Override
-			public void dataRemoved(Integer i) {
-				repaint();
-			}
-			
-			@Override
-			public void dataEnabled(Integer i, Boolean flag) {
-				repaint();	
-			}
-		});
+	public void setObjectService(ObjectService objectService) {
+		this.objectService = objectService;
+		objectService.eventService().subscribe(this);
 	}
+
+	@EventHandler
+    protected void onNodeAdded(NodeAddedEvent event) {
+        repaint();
+    }
+
+    @EventHandler
+    protected void onNodeRemoved(NodeRemovedEvent event) {
+        repaint();
+    }
+
+    @EventHandler
+    protected void onNodeChanged(NodeChangedEvent event) {
+    	repaint();
+    }
 
 	/**
 	 * Paints the color gradients
@@ -267,42 +267,44 @@ public class TransferFunctionRenderPanel1D extends JPanel {
 	 * @param g the painter of the panel
 	 */
 	private void paintDistributions(Graphics g) {
-		Graphics2D g2d = (Graphics2D) g;	
-		Set<Integer> volumeKeys = volumeDataManager.getVolumeKeys();
-		
-		float maxYValue =volumeDataManager.getGlobalMaxOccurance();
-		float maxXValue = volumeDataManager.getGlobalMaxVolumeValue();
-		if(logscale){
-			maxYValue = (float) Math.log10(maxYValue);
-		}
-		float xyScale [] = new float[]{
-				(float)getWidth()/maxXValue,
-				(float)getHeight()/maxYValue 
-		};
-		
-		//iterate volumes to draw 
-		for(Integer i : volumeKeys){
-			Color volumeColor = getColorOfVolume(i);
-			VolumeDataBlock data = volumeDataManager.getVolume(i);
-			TreeMap<Float,Integer> distribution = data.getValueDistribution();
-					
-			//sample
-			for(Float volume: distribution.keySet()){
-				Integer occurance = distribution.get(volume);
-				float coord[]={volume,occurance};
-				if(logscale ){
-					coord[1] = (float) Math.log10(coord[1]); 
-				}
-					for(int j =0; j< coord.length;j++){
-						coord[j]*=xyScale[j];
-					}
-				 
-				Point drawPoint = new Point((int)coord[0],(int)coord[1]);
-				drawPoint = transformWindowNormalSpace(drawPoint, getSize());
-				g2d.setColor(volumeColor);
-				g2d.drawRect(drawPoint.x, drawPoint.y, 1,1);
-			}
-		}
+		Graphics2D g2d = (Graphics2D) g;
+
+		// TODO: make a new version of this
+//		Set<Integer> volumeKeys = volumeDataManager.getVolumeKeys();
+//		
+//		float maxYValue =volumeDataManager.getGlobalMaxOccurance();
+//		float maxXValue = volumeDataManager.getGlobalMaxVolumeValue();
+//		if(logscale){
+//			maxYValue = (float) Math.log10(maxYValue);
+//		}
+//		float xyScale [] = new float[]{
+//				(float)getWidth()/maxXValue,
+//				(float)getHeight()/maxYValue
+//		};
+//
+//		//iterate volumes to draw
+//		for(Integer i : volumeKeys){
+//			Color volumeColor = getColorOfVolume(i);
+//			VolumeDataBlock data = volumeDataManager.getVolume(i);
+//			TreeMap<Float,Integer> distribution = data.getValueDistribution();
+//
+//			//sample
+//			for(Float volume: distribution.keySet()){
+//				Integer occurance = distribution.get(volume);
+//				float coord[]={volume,occurance};
+//				if(logscale ){
+//					coord[1] = (float) Math.log10(coord[1]);
+//				}
+//					for(int j =0; j< coord.length;j++){
+//						coord[j]*=xyScale[j];
+//					}
+//
+//				Point drawPoint = new Point((int)coord[0],(int)coord[1]);
+//				drawPoint = transformWindowNormalSpace(drawPoint, getSize());
+//				g2d.setColor(volumeColor);
+//				g2d.drawRect(drawPoint.x, drawPoint.y, 1,1);
+//			}
+//		}
 	} 
 	
 	/**
