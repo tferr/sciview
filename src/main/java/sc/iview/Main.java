@@ -39,23 +39,45 @@ import org.scijava.thread.ThreadService;
 import org.scijava.ui.UIService;
 
 import cleargl.GLVector;
+import picocli.CommandLine;
+
+import java.io.IOException;
 
 /**
  * Entry point for testing SciView functionality.
  * 
  * @author Kyle Harrington
  */
-public class Main {
+@CommandLine.Command(name = "sciview", mixinStandardHelpOptions = true, version = "sciview SNAPSHOT",
+         description = "SciView ND visualization tool.")
+public class Main implements Runnable {
+
+    @CommandLine.Option(names = {"-i", "--input"}, description = "Input to display")
+    private String source = null;
+
     public static void main( String... args ) {
+        (new Main()).run();
+    }
+
+    @Override
+    public void run() {
         SceneryBase.xinitThreads();
 
         System.setProperty( "scijava.log.level:sc.iview", "debug" );
-        Context context = new Context( ImageJService.class, SciJavaService.class, SCIFIOService.class, ThreadService.class);
+        Context context = new Context( ImageJService.class, SciJavaService.class, SCIFIOService.class, ThreadService.class, DefaultSciViewService.class );
 
         UIService ui = context.service( UIService.class );
         if( !ui.isVisible() ) ui.showUI();
 
         SciViewService sciViewService = context.service( SciViewService.class );
         SciView sciView = sciViewService.getOrCreateActiveSciView();
+
+        if( source != null) {
+            try {
+                sciView.open( source );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
