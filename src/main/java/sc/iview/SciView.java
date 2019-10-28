@@ -372,11 +372,10 @@ public class SciView extends SceneryBase implements CalibratedRealInterval<Calib
         panel = new SceneryJPanel();
         JPopupMenu.setDefaultLightWeightPopupEnabled(false);
 
-        if( menus.getMenu("SciView") != null ) {
-            final JMenuBar swingMenuBar = new JMenuBar();
-            new SwingJMenuBarCreator().createMenus(menus.getMenu("SciView"), swingMenuBar);
-            frame.setJMenuBar(swingMenuBar);
-        }
+        final JMenuBar swingMenuBar = new JMenuBar();
+        new SwingJMenuBarCreator().createMenus(menus.getMenu("SciView"), swingMenuBar);
+        frame.setJMenuBar(swingMenuBar);
+
 //        frame.addComponentListener(new ComponentAdapter() {
 //            @Override
 //            public void componentResized(ComponentEvent componentEvent) {
