@@ -31,31 +31,60 @@ package sc.iview;
 import graphics.scenery.SceneryBase;
 import io.scif.SCIFIOService;
 
+import net.imagej.ImageJ;
 import net.imagej.ImageJService;
 
 import org.scijava.Context;
+import org.scijava.display.DisplayService;
+import org.scijava.log.LogService;
+import org.scijava.script.ScriptService;
 import org.scijava.service.SciJavaService;
 import org.scijava.thread.ThreadService;
 import org.scijava.ui.UIService;
 
 import cleargl.GLVector;
+import picocli.CommandLine;
+import sun.font.Script;
+
+import java.io.IOException;
 
 /**
  * Entry point for testing SciView functionality.
  * 
  * @author Kyle Harrington
  */
-public class Main {
-    public static void main( String... args ) {
+//@CommandLine.Command(name = "sciview", mixinStandardHelpOptions = true, version = "sciview 0.2.0-beta-2-SNAPSHOT",
+//         description = "SciView is an ImageJ-based tool  for visualization and interaction with ND data.")
+public class Main implements Runnable {
+
+    @CommandLine.Option(names = {"-i", "--input"}, description = "The file to view.")
+    private String source = null;
+
+    @Override
+    public void run() {
         SceneryBase.xinitThreads();
 
         System.setProperty( "scijava.log.level:sc.iview", "debug" );
-        Context context = new Context( ImageJService.class, SciJavaService.class, SCIFIOService.class, ThreadService.class);
+        Context context = new Context( ImageJService.class, SciJavaService.class, SCIFIOService.class, ThreadService.class, DefaultSciViewService.class, UIService.class, DisplayService.class, ScriptService.class, LogService.class, SciViewService.class );
 
         UIService ui = context.service( UIService.class );
-        if( !ui.isVisible() ) ui.showUI();
+        //if( !ui.isVisible() ) ui.showUI();
 
         SciViewService sciViewService = context.service( SciViewService.class );
         SciView sciView = sciViewService.getOrCreateActiveSciView();
+
+        sciView.addSphere();
+
+        if( source != null ) {
+            try {
+                sciView.open(source);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void main( String... args ) {
+        (new Main()).run();
     }
 }
