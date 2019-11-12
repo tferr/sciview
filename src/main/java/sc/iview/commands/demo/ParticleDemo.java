@@ -32,6 +32,8 @@ import cleargl.GLVector;
 import com.jogamp.opengl.math.Quaternion;
 import graphics.scenery.*;
 import graphics.scenery.backends.ShaderType;
+import net.imagej.lut.LUTService;
+import net.imglib2.display.ColorTable;
 import org.scijava.command.Command;
 import org.scijava.command.CommandService;
 import org.scijava.io.IOService;
@@ -41,6 +43,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import sc.iview.SciView;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -66,6 +69,9 @@ public class ParticleDemo implements Command {
 
     @Parameter
     private SciView sciView;
+
+    @Parameter
+    private LUTService lutService;
 
     @Parameter
     private CommandService commandService;
@@ -135,6 +141,14 @@ public class ParticleDemo implements Command {
             agents.add(n);
         }
 
+        ColorTable colorTable = null;
+        try {
+            colorTable = lutService.loadLUT(lutService.findLUTs().get("Fire.lut"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        ColorTable finalColorTable = colorTable;
         sciView.animate(30, new Thread(() -> {
             GLVector vel;
 
@@ -154,7 +168,10 @@ public class ParticleDemo implements Command {
                 agent.setPosition(pos.plus(vel.times(dt)));
                 agent.setNeedsUpdate(true);
             }
+
+            sciView.setColormap(master, finalColorTable, node -> (double) ((GLVector) node.getMetadata().get("velocity")).length2());
         }));
+
 
         sciView.getFloor().setVisible(false);
         sciView.centerOnNode( agents.get(0) );

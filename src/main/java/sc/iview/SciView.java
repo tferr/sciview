@@ -104,6 +104,7 @@ import sc.iview.event.NodeRemovedEvent;
 import sc.iview.process.MeshConverter;
 import sc.iview.vector.ClearGLVector3;
 import sc.iview.vector.Vector3;
+import sc.iview.vector.Vector4;
 import tpietzsch.example2.VolumeViewerOptions;
 
 import javax.imageio.ImageIO;
@@ -122,6 +123,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -1647,6 +1649,78 @@ public class SciView extends SceneryBase implements CalibratedRealInterval<Calib
     public <T extends RealType<T>> Node addVolume( IterableInterval<T> image, String name ) {
         return addVolume( image, name, 1, 1, 1 );
     }
+
+    /**
+     * Set the ColorMap of node n to the supplied colorTable
+     * @param n
+     * @param colorTable
+     */
+    public void setColormap( Node n, ColorTable colorTable, Function<Node, Double> nodeToVal ) {
+
+        // Run function recursively, collect min/max, then run again to assign color using color table
+        double[] minMax = new double[]{Double.MAX_VALUE, Double.MIN_VALUE};
+        n.getChildren().forEach(node -> {
+            Double val = nodeToVal.apply(node);
+            if( val > minMax[0] )
+                minMax[0] = val;
+            if( val < minMax[1] )
+                minMax[1] = val;
+        });
+
+        double denom = minMax[1] - minMax[0];
+        n.getChildren().forEach(node -> {
+            Double val = nodeToVal.apply(node);
+            int idx = (int) Math.round((val - minMax[0]) / denom);
+            GLVector col = new GLVector(colorTable.get(0,idx),
+                    colorTable.get(1,idx),
+                    colorTable.get(2,idx),
+                    colorTable.get(3,idx)
+            );
+
+            if( n.getInstancedProperties().isEmpty() )// Not instanced
+                n.getMaterial().setDiffuse(col);
+            else
+                n.getInstancedProperties().put("Color", ()-> col);
+            n.setNeedsUpdate(true);
+        });
+
+    }
+
+    // THis implementation uses runRecursive
+//    /**
+//     * Set the ColorMap of node n to the supplied colorTable
+//     * @param n
+//     * @param colorTable
+//     */
+//    public void setColormap( Node n, ColorTable colorTable, Function<Node, Double> nodeToVal ) {
+//
+//        // Run function recursively, collect min/max, then run again to assign color using color table
+//        double[] minMax = new double[]{Double.MAX_VALUE, Double.MIN_VALUE};
+//        n.runRecursive(node -> {
+//            Double val = nodeToVal.apply(node);
+//            if( val > minMax[0] )
+//                minMax[0] = val;
+//            if( val < minMax[1] )
+//                minMax[1] = val;
+//        });
+//
+//        double denom = minMax[1] - minMax[0];
+//        n.runRecursive(node -> {
+//            Double val = nodeToVal.apply(node);
+//            int idx = (int) Math.round((val - minMax[0]) / denom);
+//            GLVector col = new GLVector(colorTable.get(0,idx),
+//                    colorTable.get(1,idx),
+//                    colorTable.get(2,idx),
+//                    colorTable.get(3,idx)
+//            );
+//
+//            if( n.getInstancedProperties().isEmpty() )// Not instanced
+//                n.getMaterial().setDiffuse(col);
+//            else
+//                n.getInstancedProperties().put("Color", ()-> col);
+//        });
+//
+//    }
 
     /**
      * Set the ColorMap of node n to the supplied colorTable
