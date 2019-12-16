@@ -37,15 +37,24 @@ import net.imglib2.type.logic.BitType;
 
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
+import org.scijava.command.CommandModule;
+import org.scijava.command.CommandService;
+import org.scijava.io.IOService;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Menu;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
+import org.scijava.ui.UIService;
 import sc.iview.SciView;
 import sc.iview.process.MeshConverter;
 
 import graphics.scenery.Mesh;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 @Plugin(type = Command.class, menuRoot = "SciView", //
         menu = { @Menu(label = "Process", weight = PROCESS), //
@@ -83,4 +92,30 @@ public class MeshToImage implements Command {
         img = ops.geom().voxelization( ijMesh, width, height, depth );
     }
 
+    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
+
+        String filename = "/home/kharrington/Data/Voxelization/sphere25mm/Sphere_diameter_25mm.stl";
+
+        SciView sv = SciView.createSciView();
+        IOService io = sv.getScijavaContext().service(IOService.class);
+        CommandService command = sv.getScijavaContext().service(CommandService.class);
+        UIService ui = sv.getScijavaContext().service(UIService.class);
+
+        Object data = io.open( filename );
+        Mesh mesh = (Mesh) sv.addMesh((net.imagej.mesh.Mesh)data);
+        HashMap<String, Object> argmap = new HashMap<String, Object>();
+        argmap.put("mesh", mesh);
+        argmap.put("width", 100);
+        argmap.put("height", 100);
+        argmap.put("depth", 100);
+
+        Future<CommandModule> result = command.run(MeshToImage.class, true, argmap);
+        RandomAccessibleInterval<BitType> img = (RandomAccessibleInterval<BitType>) result.get().getOutput("img");
+
+        ui.showUI();
+        ui.show(img);
+
+        //org.joml.Intersectionf.testLineSegmentTriangle()
+        // check testLineSegmentTriangle
+    }
 }
