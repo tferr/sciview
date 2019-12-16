@@ -60,8 +60,7 @@ import sc.iview.vector.JOMLVector3;
  * @author Kyle Harrington (University of Idaho)
  */
 @Plugin(type = Command.class)
-public class DefaultVoxelization3D extends AbstractUnaryFunctionOp<Mesh, RandomAccessibleInterval<BitType>>
-		implements Ops.Geometric.Voxelization {
+public class DefaultVoxelization3D implements Command {
 
 	@Parameter(type = ItemIO.INPUT, required = false)
 	private int width = 10;
@@ -75,9 +74,24 @@ public class DefaultVoxelization3D extends AbstractUnaryFunctionOp<Mesh, RandomA
 	@Parameter
 	private OpService ops;
 
-	private float borderPadding = 10.1f;
+	//private float borderPadding = 0.001f;
+	@Parameter(type = ItemIO.INPUT, required = false)
+	private float borderPadding = 2f;
+
+	@Parameter(type = ItemIO.INPUT, required = false)
+	private long voxelEpsilon = 1;
+
+	@Parameter
+	private Mesh mesh;
+
+	@Parameter(type = ItemIO.OUTPUT, required = false)
+    private RandomAccessibleInterval<BitType> img;
 
 	@Override
+	public void run() {
+		img = calculate(mesh);
+	}
+
 	public RandomAccessibleInterval<BitType> calculate(Mesh input) {
 
 		Img<BitType> outImg = ops.create().img(new FinalInterval(width, height, depth), new BitType());
@@ -136,12 +150,16 @@ public class DefaultVoxelization3D extends AbstractUnaryFunctionOp<Mesh, RandomA
 																// for speed
 
 			long[] indices = new long[3];
-			for (indices[0] = (long) Math.floor(minSubBoundary[0] / stepSizes[0]); indices[0] < Math
-					.floor(maxSubBoundary[0] / stepSizes[0]); indices[0]++) {
-				for (indices[1] = (long) Math.floor(minSubBoundary[1] / stepSizes[1]); indices[1] < Math
-						.floor(maxSubBoundary[1] / stepSizes[1]); indices[1]++) {
-					for (indices[2] = (long) Math.floor(minSubBoundary[2] / stepSizes[2]); indices[2] < Math
-							.floor(maxSubBoundary[2] / stepSizes[2]); indices[2]++) {
+			// TODO these loops seem to be an issue
+			for (indices[0] = (long) Math.max( Math.floor(minSubBoundary[0] / stepSizes[0]) - voxelEpsilon, 0 );
+				 indices[0] < Math.min( Math.floor(maxSubBoundary[0] / stepSizes[0]) + voxelEpsilon, width );
+				 indices[0]++) {
+				for (indices[1] = (long) Math.max( Math.floor(minSubBoundary[1] / stepSizes[1]) - voxelEpsilon, 0 );
+					 indices[1] < Math.min( Math.floor(maxSubBoundary[1] / stepSizes[1]) + voxelEpsilon, height );
+					 indices[1]++) {
+					for (indices[2] = (long) Math.max( Math.floor(minSubBoundary[2] / stepSizes[2]) - voxelEpsilon, 0 );
+						 indices[2] < Math.min( Math.floor(maxSubBoundary[2] / stepSizes[2]) + voxelEpsilon, depth );
+						 indices[2]++) {
 						ra.setPosition(indices);
 						if (!ra.get().get())// Don't check if voxel is already
 											// filled
@@ -188,11 +206,11 @@ public class DefaultVoxelization3D extends AbstractUnaryFunctionOp<Mesh, RandomA
 				vmaxArray[q] = (-maxboxArray[q] - v);
 			}
 		}
-		System.out.println("planeBoxOverlap: " + dotArray(normalArray, vminArray));
-		if (dotArray(normalArray, vminArray) > 0.0F) {
+
+		if (dotArray(normalArray, vminArray) > 0) {
 			return 0;
 		}
-		if (dotArray(normalArray, vmaxArray) >= 0.0F) {
+		if (dotArray(normalArray, vmaxArray) >= 0 ) {
 			return 1;
 		}
 		return 0;
@@ -336,8 +354,6 @@ public class DefaultVoxelization3D extends AbstractUnaryFunctionOp<Mesh, RandomA
 		dest[2] = (v1[0] * v2[1] - v1[1] * v2[0]);
 	}
 
-	private double epsilon = -1.1;
-
 	private int triBoxOverlap(double[] boxcenter, double[] boxhalfsize, Vector3D pf1, Vector3D pf2, Vector3D pf3) {
 		double[] vert1 = pf1.toArray();
 		double[] vert2 = pf2.toArray();
@@ -364,47 +380,56 @@ public class DefaultVoxelization3D extends AbstractUnaryFunctionOp<Mesh, RandomA
 		double fey = Math.abs(e0[1]);
 		double fez = Math.abs(e0[2]);
 
-		axisTest_x01(e0[2], e0[1], fez, fey, v0, v1, v2, boxhalfsize);
-		axisTest_y02(e0[2], e0[0], fez, fex, v0, v1, v2, boxhalfsize);
-		axisTest_z12(e0[1], e0[0], fey, fex, v0, v1, v2, boxhalfsize);
-
-		fex = Math.abs(e1[0]);
-		fey = Math.abs(e1[1]);
-		fez = Math.abs(e1[2]);
-
-		axisTest_x01(e1[2], e1[1], fez, fey, v0, v1, v2, boxhalfsize);
-		axisTest_y02(e1[2], e1[0], fez, fex, v0, v1, v2, boxhalfsize);
-		axisTest_z0(e1[1], e1[0], fey, fex, v0, v1, v2, boxhalfsize);
-
-		fex = Math.abs(e2[0]);
-		fey = Math.abs(e2[1]);
-		fez = Math.abs(e2[2]);
-
-		axisTest_x2(e2[2], e2[1], fez, fey, v0, v1, v2, boxhalfsize);
-		axisTest_y1(e2[2], e2[0], fez, fex, v0, v1, v2, boxhalfsize);
-		axisTest_z12(e2[1], e2[0], fey, fex, v0, v1, v2, boxhalfsize);
-
-		// use epsilon in conditionals
-
-		double min = findMin(v0[0], v1[0], v2[0]);
-		double max = findMax(v0[0], v1[0], v2[0]);
-		if ((min > boxhalfsize[0] + epsilon) || (max < -boxhalfsize[0] - epsilon)) {
-			return 0;
-		}
-		min = findMin(v0[1], v1[1], v2[1]);
-		max = findMax(v0[1], v1[1], v2[1]);
-		if ((min > boxhalfsize[1] + epsilon) || (max < -boxhalfsize[1] - epsilon)) {
-			return 0;
-		}
-		min = findMin(v0[2], v1[2], v2[2]);
-		max = findMax(v0[2], v1[2], v2[2]);
-		if ((min > boxhalfsize[2] + epsilon) || (max < -boxhalfsize[2] - epsilon)) {
-			return 0;
-		}
-		cross(normal, e0, e1);
-		if (planeBoxOverlap(normal, v0, boxhalfsize) != 1) {
-			return 0;
-		}
+//		if( axisTest_x01(e0[2], e0[1], fez, fey, v0, v1, v2, boxhalfsize) == 0 )
+//			return 0;
+//		if( axisTest_y02(e0[2], e0[0], fez, fex, v0, v1, v2, boxhalfsize) == 0 )
+//			return 0;
+//		if( axisTest_z12(e0[1], e0[0], fey, fex, v0, v1, v2, boxhalfsize) == 0 )
+//			return 0;
+//
+//		fex = Math.abs(e1[0]);
+//		fey = Math.abs(e1[1]);
+//		fez = Math.abs(e1[2]);
+//
+//		if( axisTest_x01(e1[2], e1[1], fez, fey, v0, v1, v2, boxhalfsize) == 0 )
+//			return 0;
+//		if( axisTest_y02(e1[2], e1[0], fez, fex, v0, v1, v2, boxhalfsize) == 0 )
+//			return 0;
+//		if( axisTest_z0(e1[1], e1[0], fey, fex, v0, v1, v2, boxhalfsize) == 0 )
+//			return 0;
+//
+//		fex = Math.abs(e2[0]);
+//		fey = Math.abs(e2[1]);
+//		fez = Math.abs(e2[2]);
+//
+//		if( axisTest_x2(e2[2], e2[1], fez, fey, v0, v1, v2, boxhalfsize) == 0 )
+//			return 0;
+//		if( axisTest_y1(e2[2], e2[0], fez, fex, v0, v1, v2, boxhalfsize) == 0 )
+//			return 0;
+//		if( axisTest_z12(e2[1], e2[0], fey, fex, v0, v1, v2, boxhalfsize) == 0 )
+//			return 0;
+//
+//		// use epsilon in conditionals
+//
+//		double min = findMin(v0[0], v1[0], v2[0]);
+//		double max = findMax(v0[0], v1[0], v2[0]);
+//		if ((min > boxhalfsize[0] + epsilon) || (max < -boxhalfsize[0] - epsilon)) {
+//			return 0;
+//		}
+//		min = findMin(v0[1], v1[1], v2[1]);
+//		max = findMax(v0[1], v1[1], v2[1]);
+//		if ((min > boxhalfsize[1] + epsilon) || (max < -boxhalfsize[1] - epsilon)) {
+//			return 0;
+//		}
+//		min = findMin(v0[2], v1[2], v2[2]);
+//		max = findMax(v0[2], v1[2], v2[2]);
+//		if ((min > boxhalfsize[2] + epsilon) || (max < -boxhalfsize[2] - epsilon)) {
+//			return 0;
+//		}
+//		cross(normal, e0, e1);
+//		if (planeBoxOverlap(normal, v0, boxhalfsize) != 1) {
+//			return 0;
+//		}
 		return 1;
 	}
 

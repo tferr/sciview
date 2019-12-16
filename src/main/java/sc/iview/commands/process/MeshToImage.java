@@ -47,6 +47,7 @@ import org.scijava.plugin.Plugin;
 
 import org.scijava.ui.UIService;
 import sc.iview.SciView;
+import sc.iview.ops.DefaultVoxelization3D;
 import sc.iview.process.MeshConverter;
 
 import graphics.scenery.Mesh;
@@ -89,12 +90,20 @@ public class MeshToImage implements Command {
     public void run() {
         net.imagej.mesh.Mesh ijMesh = MeshConverter.toImageJ( mesh );
 
-        img = ops.geom().voxelization( ijMesh, width, height, depth );
+        //img = ops.geom().voxelization( ijMesh, width, height, depth );
+        CommandService command = sciView.getScijavaContext().service(CommandService.class);
+        HashMap<String, Object> argmap = new HashMap<String, Object>();
+        argmap.put("width", width);
+        argmap.put("height", height);
+        argmap.put("depth", depth);
+        argmap.put("mesh", ijMesh);
+        command.run(DefaultVoxelization3D.class, true, argmap);
     }
 
     public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
 
         String filename = "/home/kharrington/Data/Voxelization/sphere25mm/Sphere_diameter_25mm.stl";
+        //String filename = "/home/kharrington/Data/Voxelization/pipeBubble/pipebuble2.stl";
 
         SciView sv = SciView.createSciView();
         IOService io = sv.getScijavaContext().service(IOService.class);
