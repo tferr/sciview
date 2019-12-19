@@ -117,6 +117,10 @@
 		<imagej-updater.version>0.10.3</imagej-updater.version>
 		<imagej-common.version>9ed2255</imagej-common.version>
 
+		<bigdataviewer-core.version>7.0.0</bigdataviewer-core.version>
+        <bigvolumeviewer.version>0.1.6</bigvolumeviewer.version>
+
+
 <!--		<custom-imagej-updater.version>a580040</custom-imagej-updater.version>-->
 	</properties>
 
