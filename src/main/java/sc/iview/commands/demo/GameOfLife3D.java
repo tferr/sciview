@@ -268,10 +268,13 @@ public class GameOfLife3D extends InteractiveCommand {
             volume.setName( "Game of Life 3D" );
 
             sciView.centerOnNode(volume);
-        } else {
-            // NB: Name must be unique each time.
-            sciView.updateVolume( field, name + "-" + ++tick, voxelDims, volume );
         }
+
+        // FIXME API change
+//        else {
+//            // NB: Name must be unique each time.
+//            sciView.updateVolume( field, name + "-" + ++tick, voxelDims, volume );
+//        }
     }
 
     /**

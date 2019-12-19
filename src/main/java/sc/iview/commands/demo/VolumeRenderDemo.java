@@ -40,6 +40,7 @@ import net.imglib2.img.Img;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import org.scijava.command.Command;
+import org.scijava.command.CommandService;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Menu;
 import org.scijava.plugin.Parameter;
@@ -119,5 +120,11 @@ public class VolumeRenderDemo implements Command {
 
         sciView.setActiveNode(v);
         sciView.centerOnNode( sciView.getActiveNode() );
+    }
+
+    public static void main(String[] args) {
+        SciView sciView = SciView.createSciView();
+        CommandService command = sciView.getScijavaContext().service(CommandService.class);
+        command.run(VolumeRenderDemo.class, true);
     }
 }

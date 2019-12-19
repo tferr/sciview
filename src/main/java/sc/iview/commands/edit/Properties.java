@@ -32,7 +32,7 @@ import cleargl.GLVector;
 import com.jogamp.opengl.math.Quaternion;
 import graphics.scenery.*;
 import graphics.scenery.volumes.Volume;
-import graphics.scenery.volumes.bdv.BDVVolume;
+//import graphics.scenery.volumes.bdv.BDVVolume;
 import org.scijava.command.Command;
 import org.scijava.command.InteractiveCommand;
 import org.scijava.event.EventService;
@@ -368,13 +368,14 @@ public class Properties extends InteractiveCommand {
             maybeRemoveInput( "text", String.class );
         }
 
-        if(currentSceneNode instanceof BDVVolume) {
-            timepoint = ((BDVVolume)currentSceneNode).getCurrentTimepoint();
-            getInfo().getMutableInput("timepoint", Integer.class).setMinimumValue(0);
-            getInfo().getMutableInput("timepoint", Integer.class).setMaximumValue(((BDVVolume) currentSceneNode).getMaxTimepoint());
-        } else {
-            maybeRemoveInput("timepoint", Integer.class);
-        }
+        // FIXME API change
+//        if(currentSceneNode instanceof BDVVolume) {
+//            timepoint = ((BDVVolume)currentSceneNode).getCurrentTimepoint();
+//            getInfo().getMutableInput("timepoint", Integer.class).setMinimumValue(0);
+//            getInfo().getMutableInput("timepoint", Integer.class).setMaximumValue(((BDVVolume) currentSceneNode).getMaxTimepoint());
+//        } else {
+//            maybeRemoveInput("timepoint", Integer.class);
+//        }
 
         fieldsUpdating = false;
     }
@@ -473,9 +474,10 @@ public class Properties extends InteractiveCommand {
             ((TextBoard)currentSceneNode).setBackgroundColor(new GLVector(backgroundColor.getRed()/255.0f, backgroundColor.getGreen()/255.0f, backgroundColor.getBlue()/255.0f));
         }
 
-        if(currentSceneNode instanceof BDVVolume) {
-            ((BDVVolume) currentSceneNode).goToTimePoint(timepoint);
-        }
+        // FIXME API change
+//        if(currentSceneNode instanceof BDVVolume) {
+//            ((BDVVolume) currentSceneNode).goToTimePoint(timepoint);
+//        }
 
         events.publish( new NodeChangedEvent( currentSceneNode ) );
     }

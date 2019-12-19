@@ -28,6 +28,7 @@
  */
 package sc.iview;
 
+import bdv.util.AxisOrder;
 import cleargl.GLTypeEnum;
 import cleargl.GLVector;
 import com.bulenkov.darcula.DarculaLaf;
@@ -48,8 +49,8 @@ import graphics.scenery.controls.behaviours.MovementCommand;
 import graphics.scenery.controls.behaviours.SelectCommand;
 import graphics.scenery.utils.*;
 import graphics.scenery.volumes.TransferFunction;
-import graphics.scenery.volumes.Volume;
-import graphics.scenery.volumes.bdv.BDVVolume;
+//import graphics.scenery.volumes.Volume;
+import graphics.scenery.volumes.bdv.Volume;
 import io.scif.SCIFIOService;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -70,6 +71,7 @@ import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.type.volatiles.VolatileFloatType;
 import net.imglib2.type.volatiles.VolatileUnsignedByteType;
@@ -1186,10 +1188,10 @@ public class SciView extends SceneryBase implements CalibratedRealInterval<Calib
      * @throws IOException
      */
     public void open( final String source ) throws IOException {
-        if(source.endsWith(".xml")) {
-            addBDVVolume(source);
-            return;
-        }
+//        if(source.endsWith(".xml")) {
+//            addBDVVolume(source);
+//            return;
+//        }
 
         final Object data = io.open( source );
         if( data instanceof net.imagej.mesh.Mesh ) addMesh( ( net.imagej.mesh.Mesh ) data );
@@ -1621,25 +1623,25 @@ public class SciView extends SceneryBase implements CalibratedRealInterval<Calib
      * @param source, the path to an XML file for BDV style XML/Hdf5
      * @return a Node corresponding to the BDVNode
      */
-    public Node addBDVVolume( String source ) {
-        //getSettings().set("Renderer.HDR.Exposure", 20.0f);
-
-        final VolumeViewerOptions opts = new VolumeViewerOptions();
-        opts.maxCacheSizeInMB(Integer.parseInt(System.getProperty("scenery.BDVVolume.maxCacheSize", "512")));
-        final BDVVolume v = new BDVVolume(source, opts);
-
-        // TODO: use unitService to set scale
-        v.setScale(new GLVector(0.01f, 0.01f, 0.01f));
-        v.setBoundingBox(v.generateBoundingBox());
-
-        getScene().addChild(v);
-        setActiveNode(v);
-        v.goToTimePoint(0);
-
-		eventService.publish( new NodeAddedEvent( v ) );
-
-        return v;
-    }
+//    public Node addBDVVolume( String source ) {
+//        //getSettings().set("Renderer.HDR.Exposure", 20.0f);
+//
+//        final VolumeViewerOptions opts = new VolumeViewerOptions();
+//        opts.maxCacheSizeInMB(Integer.parseInt(System.getProperty("scenery.BDVVolume.maxCacheSize", "512")));
+//        final BDVVolume v = new BDVVolume(source, opts);
+//
+//        // TODO: use unitService to set scale
+//        v.setScale(new GLVector(0.01f, 0.01f, 0.01f));
+//        v.setBoundingBox(v.generateBoundingBox());
+//
+//        getScene().addChild(v);
+//        setActiveNode(v);
+//        v.goToTimePoint(0);
+//
+//		eventService.publish( new NodeAddedEvent( v ) );
+//
+//        return v;
+//    }
 
     /**
      * Add a Dataset as a Volume with the specified voxel dimensions
@@ -1731,18 +1733,19 @@ public class SciView extends SceneryBase implements CalibratedRealInterval<Calib
 
         n.getMetadata().put("sciviewColormap", colorTable);
 
-        if(n instanceof Volume) {
-            ((Volume) n).getColormaps().put("sciviewColormap",
-                    new Volume.Colormap.ColormapBuffer(new GenericTexture("colorTable",
-                    new GLVector(colorTable.getLength(), copies, 1.0f), 4,
-                    GLTypeEnum.UnsignedByte,
-                    byteBuffer,
-                    // don't repeat the color map
-                    TextureRepeatMode.ClampToEdge, TextureRepeatMode.ClampToEdge, TextureRepeatMode.ClampToEdge)));
-            ((Volume) n).setColormap("sciviewColormap");
-            n.setDirty(true);
-            n.setNeedsUpdate(true);
-        }
+        // FIXME commented during API change
+//        if(n instanceof Volume) {
+//            ((Volume) n).getColormaps().put("sciviewColormap",
+//                    new Volume.Colormap.ColormapBuffer(new GenericTexture("colorTable",
+//                    new GLVector(colorTable.getLength(), copies, 1.0f), 4,
+//                    GLTypeEnum.UnsignedByte,
+//                    byteBuffer,
+//                    // don't repeat the color map
+//                    TextureRepeatMode.ClampToEdge, TextureRepeatMode.ClampToEdge, TextureRepeatMode.ClampToEdge)));
+//            ((Volume) n).setColormap("sciviewColormap");
+//            n.setDirty(true);
+//            n.setNeedsUpdate(true);
+//        }
     }
 
     /**
@@ -1761,7 +1764,19 @@ public class SciView extends SceneryBase implements CalibratedRealInterval<Calib
         long[] dimensions = new long[3];
         image.dimensions( dimensions );
 
-        Volume v = new Volume();
+        // FIXME this is horrible during API change
+        Img<UnsignedByteType> toRender = ops.create().img(image, new UnsignedByteType());
+        Cursor<T> iCur = image.cursor();
+        Cursor<UnsignedByteType> rCur = toRender.cursor();
+        while(iCur.hasNext()) {
+            iCur.fwd();
+            rCur.fwd();
+            rCur.get().set((int) iCur.get().getRealDouble());
+        }
+
+
+        VolumeViewerOptions options = new VolumeViewerOptions();
+        Volume v = Volume.Companion.fromRAII( toRender, new UnsignedByteType(), AxisOrder.XYZ, "volume", getHub(), options);
 
         getScene().addChild( v );
 
@@ -1794,9 +1809,10 @@ public class SciView extends SceneryBase implements CalibratedRealInterval<Calib
 
         updateVolume( image, name, voxelDimensions, v );
 
-        v.setTrangemin( minVal );
-        v.setTrangemax( maxVal );
-        v.setTransferFunction(TransferFunction.ramp(0.0f, 0.4f));
+        // FIXME disabled during API change
+//        v.setTrangemin( minVal );
+//        v.setTrangemax( maxVal );
+//        v.setTransferFunction(TransferFunction.ramp(0.0f, 0.4f));
 
         try {
             setColormap( v, lutService.loadLUT( lutService.findLUTs().get( "WCIF/ICA.lut" ) ) );
@@ -1845,32 +1861,33 @@ public class SciView extends SceneryBase implements CalibratedRealInterval<Calib
             return null;
         }
 
+        // FIXME check if this is needed during API change
         // Make and populate a ByteBuffer with the content of the Dataset
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(
-                ( int ) ( bytesPerVoxel * dimensions[0] * dimensions[1] * dimensions[2] ) );
-        Cursor<T> cursor = image.cursor();
-
-        while( cursor.hasNext() ) {
-            cursor.fwd();
-            // TODO should we check if volatiles are valid
-            if( voxelType == UnsignedByteType.class ) {
-                byteBuffer.put( ( byte ) ( ( ( UnsignedByteType ) cursor.get() ).get() ) );
-            } else if( voxelType == VolatileUnsignedByteType.class ) {
-                byteBuffer.put( ( byte ) ( ( ( VolatileUnsignedByteType ) cursor.get() ).get().get() ) );
-            } else if( voxelType == UnsignedShortType.class ) {
-                byteBuffer.putShort( ( short ) Math.abs( ( ( UnsignedShortType ) cursor.get() ).getShort() ) );
-            } else if( voxelType == VolatileUnsignedShortType.class ) {
-                byteBuffer.putShort( ( short ) Math.abs( ( ( VolatileUnsignedShortType ) cursor.get() ).get().getShort() ) );
-            } else if( voxelType == FloatType.class ) {
-                byteBuffer.putFloat( ( ( FloatType ) cursor.get() ).get() );
-            } else if( voxelType == VolatileFloatType.class ) {
-                byteBuffer.putFloat( ( ( VolatileFloatType ) cursor.get() ).get().get() );
-            }
-        }
-        byteBuffer.flip();
-
-        v.readFromBuffer( name, byteBuffer, dimensions[0], dimensions[1], dimensions[2], voxelDimensions[0],
-                          voxelDimensions[1], voxelDimensions[2], nType, bytesPerVoxel );
+//        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(
+//                ( int ) ( bytesPerVoxel * dimensions[0] * dimensions[1] * dimensions[2] ) );
+//        Cursor<T> cursor = image.cursor();
+//
+//        while( cursor.hasNext() ) {
+//            cursor.fwd();
+//            // TODO should we check if volatiles are valid
+//            if( voxelType == UnsignedByteType.class ) {
+//                byteBuffer.put( ( byte ) ( ( ( UnsignedByteType ) cursor.get() ).get() ) );
+//            } else if( voxelType == VolatileUnsignedByteType.class ) {
+//                byteBuffer.put( ( byte ) ( ( ( VolatileUnsignedByteType ) cursor.get() ).get().get() ) );
+//            } else if( voxelType == UnsignedShortType.class ) {
+//                byteBuffer.putShort( ( short ) Math.abs( ( ( UnsignedShortType ) cursor.get() ).getShort() ) );
+//            } else if( voxelType == VolatileUnsignedShortType.class ) {
+//                byteBuffer.putShort( ( short ) Math.abs( ( ( VolatileUnsignedShortType ) cursor.get() ).get().getShort() ) );
+//            } else if( voxelType == FloatType.class ) {
+//                byteBuffer.putFloat( ( ( FloatType ) cursor.get() ).get() );
+//            } else if( voxelType == VolatileFloatType.class ) {
+//                byteBuffer.putFloat( ( ( VolatileFloatType ) cursor.get() ).get().get() );
+//            }
+//        }
+//        byteBuffer.flip();
+//
+//        v.readFromBuffer( name, byteBuffer, dimensions[0], dimensions[1], dimensions[2], voxelDimensions[0],
+//                          voxelDimensions[1], voxelDimensions[2], nType, bytesPerVoxel );
 
         v.setDirty( true );
         v.setNeedsUpdate( true );
