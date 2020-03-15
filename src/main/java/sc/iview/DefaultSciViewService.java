@@ -113,8 +113,9 @@ public class DefaultSciViewService extends AbstractService implements SciViewSer
 
         Future<?> svThread = threadService.run(() -> sv.main());
 
-        while( !sv.isInitialized() &&
-                !svThread.isDone() && !
+        while( ( System.getProperty("scenery.Headless").compareToIgnoreCase("true") == 0
+                || !sv.isInitialized() ) &&
+                !svThread.isDone() &&
                 !svThread.isCancelled() ) {
             try {
                 Thread.sleep( 20 );
